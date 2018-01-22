@@ -12,18 +12,22 @@ const signalR = require('./signalr-client-1.0.0-alpha2-final.min.js');
 export default class SignalR extends Component<{}> {
 
 
-    componentDidMount() {
+    constructor(props) {
+        super(props);
 
+        this.state = { error: false };
+    }
+
+    componentDidMount() {
+        this.onPress();
     }
 
     onPress = () => {
-        console.warn('Test', signalR);
-
-        let hubUrl = 'http://localhost:60164/chat';
+        let hubUrl = 'http://192.168.13.198:60164/chat';
         let httpConnection = new signalR.HttpConnection(hubUrl);
-        let hubConnection = new signalR.HubConnection(httpConnection);
+        this.hubConnection = new signalR.HubConnection(httpConnection);
 
-        hubConnection.on("Send", data => {
+        this.hubConnection.on("Send", data => {
             console.warn('message', data);
         });
 
@@ -39,14 +43,27 @@ export default class SignalR extends Component<{}> {
         });
         */
 
-        hubConnection.start();
+        this.hubConnection.start()
+            .then(() => this.setState({ error: false }))
+            .catch(error => {
+                this.setState({ error: true })
+                console.warn('error', error);
+            });
+    }
+
+    onSend = () => {
+        this.hubConnection.invoke('Send', 'Test');
     }
 
     render() {
         return (
             <View >
-                <TouchableOpacity onPress={this.onPress}>
-                    <Text>SignalR Chater</Text>
+                { this.state.error && <Text>Error</Text> }
+
+                <TouchableOpacity onPress={ this.onSend }>
+                    <View >
+                        <Text>__________________________________Send</Text>
+                    </View>
                 </TouchableOpacity>
             </View>
         );
